@@ -1,0 +1,173 @@
+version: "3"
+services:
+
+#------------Gateway----------------#
+
+  gateway_app:
+    image: autograph/gateway:0.0.1
+    container_name: atgrph_gateway_app
+    depends_on:
+      - gateway_redis
+    ports:
+      - 18080:8080
+    networks:
+      - gateway
+      - apps
+
+
+  gateway_redis:
+    image: redis:3.2-alpine
+    container_name: atgrph_gateway_redis
+    ports:
+      - "6382:6379"
+    networks:
+      - gateway
+
+
+#-------------Monolith--------------#
+
+  monolith:
+    image: autograph/monolith:1.0.0
+    container_name: atgrph_monolith_app
+    depends_on:
+      - redis
+      - elastic
+      - db
+    environment:
+      - DB_USERNAME=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_HOST=${MONOLITH_DB_HOST}
+      - ELASTIC_HOST=${MONOLITH_ELASTIC_HOST}
+      - REDIS_HOST=${MONOLITH_REDIS_HOST}
+    ports:
+      - 8081:8080
+    volumes:
+      - /data/media:/data/media
+    networks:
+      - monolith
+      - apps
+
+  redis:
+    image: redis:3.2-alpine
+    container_name: atgrph_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - monolith
+
+  db:
+    image: mariadb:10.3
+    container_name: atgrph_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    networks:
+      - monolith
+    volumes:
+      - ${MARIA_DB_STORAGE_PATH}:/var/lib/mysql
+
+  elastic:
+    image: autograph/elasticsearch:latest
+    container_name: atgrph_elastic
+    ports:
+      - 9300:9300
+      - 9200:9200
+    volumes:
+      - ${ELASTIC_STORAGE_PATH}:/usr/share/elasticsearch/data
+    networks:
+      - monolith
+
+#-------------Sales------------------#
+
+  sales_app:
+    image: autograph/sale:latest
+    container_name: atgrph_sales_app
+    depends_on:
+      - sales_db
+      - sales_redis
+    ports:
+      - "8082:8080"
+    volumes:
+      - /data/sales/media:/data/media
+    networks:
+      - sales
+      - apps
+
+  sales_redis:
+    image: redis:3.2-alpine
+    container_name: atgrph_sales_redis
+    ports:
+      - "6380:6379"
+    networks:
+      - sales
+
+  sales_db:
+    image: mariadb:10.3
+    container_name: atgrph_sales_db
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_SALES_DATABASE}
+      - BASE_URL=${HTTP_PROTOCOL}://${HOST_NAME}/${SALE_APP_PATH}
+    networks:
+      - sales
+    volumes:
+      - ${MARIA_DB_SALES_STORAGE_PATH}:/var/lib/mysql
+
+#------------Auth-----------------------#
+
+  auth_app:
+    image: autograph/auth:1.0
+    container_name: atgrph_auth_app
+    depends_on:
+      - auth_db
+      - auth_redis
+    ports:
+      - "8085:8080"
+    environment:
+      - DB_HOST=auth_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - REDIS_HOST=auth_redis
+    networks:
+      - auth
+      - apps
+
+  auth_db:
+    image: mariadb:10.3
+    container_name: atgrph_auth_db
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_AUTH_DATABASE}
+    networks:
+      - auth
+    volumes:
+      - ${MARIA_DB_AUTH_STORAGE_PATH}:/var/lib/mysql
+
+  auth_redis:
+    image: redis:3.2-alpine
+    container_name: atgrph_auth_redis
+    ports:
+      - "6381:6379"
+    networks:
+      - auth
+    volumes:
+      - ${REDIS_AUTH_STORAGE_PATH}:/data
+
+networks:
+  monolith:
+  sales:
+  gateway:
+  apps:
+  auth:

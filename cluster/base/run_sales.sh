@@ -1,0 +1,1 @@
+docker-compose up sales_redis sales_db

@@ -1,0 +1,5 @@
+version: "3"
+services:
+
+  auth_redis:
+    command: redis-server --appendonly yes

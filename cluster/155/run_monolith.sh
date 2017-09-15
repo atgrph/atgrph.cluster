@@ -1,0 +1,1 @@
+../base/run_monolith.sh
