@@ -34,9 +34,14 @@ services:
       - elastic
       - db
     environment:
+      # DB
+      - DB_HOST=${MONOLITH_DB_HOST}
       - DB_USERNAME=root
       - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - DB_HOST=${MONOLITH_DB_HOST}
+      - DB_HOST_QUARTZ=${MONOLITH_DB_HOST}
+      - DB_USERNAME_QUARTZ=${MYSQL_ROOT_PASSWORD}
+      - DB_PASSWORD_QUARTZ=${MONOLITH_DB_HOST}
+      # Other
       - ELASTIC_HOST=${MONOLITH_ELASTIC_HOST}
       - REDIS_HOST=${MONOLITH_REDIS_HOST}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
