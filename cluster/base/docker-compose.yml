@@ -52,6 +52,7 @@ services:
     networks:
       - monolith
       - apps
+      - binder
 
   redis:
     image: redis:3.2-alpine
@@ -103,6 +104,7 @@ services:
     networks:
       - sales
       - apps
+      - binder
 
   sales_redis:
     image: redis:3.2-alpine
@@ -172,9 +174,24 @@ services:
     volumes:
       - ${REDIS_AUTH_STORAGE_PATH}:/data
 
+
+#------------Binder-----------------------#
+  binder_rabbit:
+    image: rabbitmq:3-management
+    container_name: binder_rabbit
+    ports:
+      - "4369:4369"
+      - "5671:567"
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - binder
+
+
 networks:
   monolith:
   sales:
   gateway:
   apps:
   auth:
+  binder:
